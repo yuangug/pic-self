@@ -1230,11 +1230,11 @@ class DrawpicPlugin(MaiBotPlugin):
 
         if normalized_command == "video":
             prompt = rest_payload.strip()
+            has_agnes_key = bool(self.config.agnes.api_key and self.config.agnes.api_key != "your-agnes-api-key")
+            agnes_video_models = [m for m in self.config.agnes.video_models if m.strip()]
             self.ctx.logger.info(
                 "视频命令进入: prompt=%s video_models=%s agnes_key_set=%s",
-                prompt[:60],
-                router.get_agnes_video_models(),
-                bool(self.config.agnes.api_key and self.config.agnes.api_key != "your-agnes-api-key"),
+                prompt[:60], agnes_video_models, has_agnes_key,
             )
             if not prompt:
                 await self._send_command_reply(
