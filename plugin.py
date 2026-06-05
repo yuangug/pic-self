@@ -951,6 +951,10 @@ class DrawpicPlugin(MaiBotPlugin):
         )
         first_word, rest_payload = self._split_command_payload(command_payload)
         normalized_command = self._normalize_command_name(first_word)
+        self.ctx.logger.info(
+            "绘图命令解析: payload=%s first_word=%s normalized=%s rest=%s",
+            command_payload[:80], first_word, normalized_command, rest_payload[:60],
+        )
 
         if normalized_command == "status":
             latest_task = self._task_store.get_latest_task(
@@ -1226,6 +1230,12 @@ class DrawpicPlugin(MaiBotPlugin):
 
         if normalized_command == "video":
             prompt = rest_payload.strip()
+            self.ctx.logger.info(
+                "视频命令进入: prompt=%s video_models=%s agnes_key_set=%s",
+                prompt[:60],
+                router.get_agnes_video_models(),
+                bool(self.config.agnes.api_key and self.config.agnes.api_key != "your-agnes-api-key"),
+            )
             if not prompt:
                 await self._send_command_reply(
                     title="缺少视频提示词",
