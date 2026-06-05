@@ -1153,20 +1153,18 @@ class DrawpicPlugin(MaiBotPlugin):
             try:
                 draw_service = self._require_draw_service()
                 router = self._require_router()
-                agnes_models = router.get_agnes_image_models()
-                if not agnes_models:
+                resolved_model = router.resolve_model_name("", allow_unknown_model=False)
+                provider_name = router.get_model_provider(resolved_model)
+                if not provider_name:
                     await self._send_command_reply(
                         title="改图功能不可用",
-                        body="当前未配置 Agnes 图片模型，无法使用改图功能。",
+                        body="当前未配置可用图片模型，无法使用改图功能。",
                         stream_id=normalized_stream_id,
                         user_id=normalized_user_id,
                         group_id=normalized_group_id,
                         platform=normalized_platform,
                     )
-                    return False, "无 Agnes 图片模型", 1
-
-                resolved_model = agnes_models[0]
-                provider_name = "agnes_image"
+                    return False, "无可用图片模型", 1
                 quota_allowed, quota_message = self._consume_draw_quota(
                     normalized_user_id, normalized_group_id, normalized_stream_id,
                 )
