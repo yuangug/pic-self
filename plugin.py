@@ -914,7 +914,7 @@ class DrawpicPlugin(MaiBotPlugin):
         )
         return True, "已调整用户绘图次数", 2
 
-    @Command("draw_command", description="绘图命令", pattern=r"^/(?:绘图|drawpic)(?:\s+(?P<content>[\s\S]+))?$")
+    @Command("draw_command", description="绘图命令", pattern=r"^\s*/(?:绘图|drawpic)(?:\s+(?P<content>[\s\S]+))?$")
     async def handle_draw_command(
         self,
         stream_id: str = "",
