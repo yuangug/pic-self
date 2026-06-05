@@ -214,11 +214,19 @@ class AgnesVideo:
             if elapsed > effective_timeout:
                 raise TimeoutError(f"Agnes 视频生成超时，已等待 {elapsed:.0f} 秒")
 
-            result = await self.get_video_status(task_id)
+            try:
+                result = await self.get_video_status(task_id)
+            except Exception as poll_exc:
+                self._log_error("Agnes 视频轮询异常: task_id=%s elapsed=%.0fs error=%s", task_id, elapsed, poll_exc)
+                await asyncio.sleep(poll_interval)
+                continue
+
             status = str(result.get("status") or "").strip()
             if status != last_status:
                 self._log_info("Agnes 视频任务状态: task_id=%s status=%s progress=%s", task_id, status, result.get("progress"))
                 last_status = status
+            else:
+                self._log_info("Agnes 视频轮询: task_id=%s status=%s elapsed=%.0fs", task_id, status, elapsed)
 
             if status == "completed":
                 video_url = str(result.get("video_url") or result.get("remixed_from_video_id") or "").strip()
