@@ -1094,6 +1094,8 @@ class DrawpicPlugin(MaiBotPlugin):
 
         if normalized_command == "draw":
             prompt = rest_payload.strip()
+            import re as _re
+            prompt = _re.sub(r"\[图片[：:][^\]]*\]", "", prompt).strip()
             if not prompt:
                 await self._send_command_reply(
                     title="缺少绘图提示词",
@@ -1135,6 +1137,8 @@ class DrawpicPlugin(MaiBotPlugin):
 
         if normalized_command == "edit":
             prompt = rest_payload.strip()
+            import re as _re
+            prompt = _re.sub(r"\[图片[：:][^\]]*\]", "", prompt).strip()
             if not prompt:
                 await self._send_command_reply(
                     title="缺少改图提示词",
@@ -1230,6 +1234,8 @@ class DrawpicPlugin(MaiBotPlugin):
 
         if normalized_command == "video":
             prompt = rest_payload.strip()
+            import re as _re
+            prompt = _re.sub(r"\[图片[：:][^\]]*\]", "", prompt).strip()
             has_agnes_key = bool(self.config.agnes.api_key and self.config.agnes.api_key != "your-agnes-api-key")
             agnes_video_models = [m for m in self.config.agnes.video_models if m.strip()]
             self.ctx.logger.info(
