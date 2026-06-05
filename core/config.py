@@ -296,8 +296,8 @@ class AgnesModelConfig(PluginConfigBase):
         },
     )
     video_request_timeout_seconds: int = Field(
-        default=900,
-        description="视频生成请求超时时间（秒），建议 300 ~ 1800",
+        default=1800,
+        description="视频生成请求超时时间（秒），建议 600 ~ 3600",
         json_schema_extra={
             "label": "视频请求超时",
             "hint": "视频生成耗时较长，建议设置为 300 到 1800",
