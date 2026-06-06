@@ -274,6 +274,43 @@ class DrawService:
             image_bytes_list = await asyncio.wait_for(asyncio.to_thread(call, *args), timeout=timeout_seconds)
         return image_bytes_list
 
+    async def run_provider_call_with_retry(
+        self,
+        call: Any,
+        *args: Any,
+        max_retries: int = 3,
+        task_id: str = "",
+        label: str = "图片生成",
+    ) -> list[bytes]:
+        """执行图片请求，失败时重试最多 max_retries 次。"""
+
+        last_error: Exception | None = None
+        for attempt in range(1, max_retries + 1):
+            try:
+                result = await self.run_provider_call(call, *args)
+                if attempt > 1:
+                    self.ctx.logger.info("%s重试成功: task_id=%s attempt=%d", label, task_id, attempt)
+                return result
+            except Exception as exc:
+                last_error = exc
+                if attempt < max_retries:
+                    self.ctx.logger.warning(
+                        "%s失败，将重试: task_id=%s attempt=%d/%d error=%s",
+                        label, task_id, attempt, max_retries, exc,
+                    )
+                    self.task_store.update_task(
+                        task_id,
+                        status="running",
+                        message=f"{label}失败，正在重试 ({attempt}/{max_retries})",
+                    )
+                    await asyncio.sleep(2 * attempt)
+                else:
+                    self.ctx.logger.error(
+                        "%s失败，已达最大重试次数: task_id=%s attempts=%d error=%s",
+                        label, task_id, max_retries, exc,
+                    )
+        raise last_error
+
     def track_background_task(self, task: asyncio.Task[Any], task_id: str) -> None:
         """跟踪后台任务，避免任务对象被提前释放。"""
 
@@ -429,11 +466,13 @@ class DrawService:
                 resolved_model,
                 provider_prompt[:120],
             )
-            image_bytes_list = await self.run_provider_call(
+            image_bytes_list = await self.run_provider_call_with_retry(
                 image_platform.generate_images,
                 provider_prompt,
                 resolved_model,
                 1,
+                task_id=task_id,
+                label="文生图",
             )
             if not image_bytes_list:
                 self.task_store.update_task(
@@ -532,12 +571,14 @@ class DrawService:
                 resolved_model,
                 provider_prompt[:120],
             )
-            image_bytes_list = await self.run_provider_call(
+            image_bytes_list = await self.run_provider_call_with_retry(
                 image_platform.edit_images,
                 provider_prompt,
                 resolved_model,
                 source_image_bytes,
                 1,
+                task_id=task_id,
+                label="图生图",
             )
             if not image_bytes_list:
                 self.task_store.update_task(
