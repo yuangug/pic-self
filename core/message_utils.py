@@ -261,18 +261,40 @@ async def _download_as_base64(url: str) -> str:
             return base64.b64encode(image_bytes).decode("utf-8")
 
 
+def extract_quoted_message_id(message: dict[str, Any]) -> str:
+    """从消息中提取引用/回复的消息 ID。"""
+
+    for segment in _extract_segments_from_message(message):
+        segment_type = str(segment.get("type") or "").strip()
+        if segment_type == "reply":
+            msg_id = str(segment.get("data", {}).get("id") or "").strip()
+            if msg_id:
+                return msg_id
+    source = message.get("source_message_id") or message.get("source")
+    if isinstance(source, str) and source.strip():
+        return source.strip()
+    if isinstance(source, dict):
+        return str(source.get("message_id") or source.get("id") or "").strip()
+    return ""
+
+
 async def find_source_image(
     ctx: Any,
     stream_id: str,
     source_message_id: str = "",
     source_image_base64: str = "",
     napcat_api_url: str = "",
+    current_message: dict[str, Any] | None = None,
 ) -> tuple[str, str]:
     """查找待编辑的源图片。
 
     返回 (base64, message_id)。
-    优先使用直接传入的 base64，其次通过消息 ID 查找，最后扫描最近消息。
-    查找时优先提取 base64，其次 file_id（通过 NapCat API 获取），其次 URL。
+    优先级：
+    1. 直接传入的 base64
+    2. 直接传入的 message_id
+    3. 当前消息中的图片
+    4. 当前消息引用/回复的消息中的图片
+    5. 最近消息中的第一张图片
     """
 
     normalized_image_base64 = source_image_base64.strip()
@@ -293,6 +315,31 @@ async def find_source_image(
             if image_info:
                 base64_data = await resolve_image_to_base64(napcat_api_url, image_info)
                 return base64_data, normalized_message_id
+
+    if isinstance(current_message, dict):
+        current_image_info = extract_first_image_info(current_message)
+        if current_image_info:
+            current_msg_id = str(current_message.get("message_id") or "").strip()
+            base64_data = await resolve_image_to_base64(napcat_api_url, current_image_info)
+            return base64_data, current_msg_id
+
+        quoted_id = extract_quoted_message_id(current_message)
+        if quoted_id:
+            try:
+                result = await ctx.call_capability(
+                    "message.get_by_id",
+                    message_id=quoted_id,
+                    chat_id=stream_id,
+                    include_binary_data=True,
+                )
+                quoted_msg = _unwrap_message_result(result)
+                if isinstance(quoted_msg, dict):
+                    quoted_image_info = extract_first_image_info(quoted_msg)
+                    if quoted_image_info:
+                        base64_data = await resolve_image_to_base64(napcat_api_url, quoted_image_info)
+                        return base64_data, quoted_id
+            except Exception:
+                pass
 
     recent_result = await ctx.call_capability(
         "message.get_recent",

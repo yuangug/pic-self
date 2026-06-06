@@ -542,6 +542,7 @@ class DrawpicPlugin(MaiBotPlugin):
                 source_message_id=source_message_id,
                 source_image_base64=source_image_base64,
                 napcat_api_url=self.config.general.napcat_api_url,
+                current_message=kwargs.get("message"),
             )
             source_image_bytes = base64.b64decode(image_base64)
             return await draw_service.start_background_edit_request(
@@ -770,6 +771,7 @@ class DrawpicPlugin(MaiBotPlugin):
                     image_base64, matched_msg_id = await find_source_image(
                         self.ctx, lookup_stream_id,
                         napcat_api_url=self.config.general.napcat_api_url,
+                        current_message=kwargs.get("message"),
                     )
                     image_url = self._image_base64_to_data_url(image_base64)
                 except ValueError:
@@ -1188,6 +1190,7 @@ class DrawpicPlugin(MaiBotPlugin):
                 image_base64, matched_msg_id = await find_source_image(
                     self.ctx, lookup_stream_id,
                     napcat_api_url=self.config.general.napcat_api_url,
+                    current_message=kwargs.get("message"),
                 )
                 source_image_bytes = base64.b64decode(image_base64)
                 await draw_service.start_background_edit_request(
@@ -1291,6 +1294,7 @@ class DrawpicPlugin(MaiBotPlugin):
                     image_base64, _ = await find_source_image(
                         self.ctx, lookup_stream_id,
                         napcat_api_url=self.config.general.napcat_api_url,
+                        current_message=kwargs.get("message"),
                     )
                     image_url = self._image_base64_to_data_url(image_base64)
                 except ValueError:
