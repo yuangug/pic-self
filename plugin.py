@@ -347,6 +347,7 @@ class DrawpicPlugin(MaiBotPlugin):
         brief_description="根据提示词生成图片",
         description="根据提示词调用绘图模型创建图片，并发送到当前聊天流。支持 OpenAI 兼容模型和 Agnes 图片模型。生成结果以异步后台任务形式回传，不阻塞聊天。",
         detailed_description="参数说明：\n- prompt：string，必填。图片提示词，尽量描述清楚主体、风格和画面内容。\n- stream_id：string，必填。当前聊天流 ID。\n- model：string，可选。指定图片模型名；未传时使用当前会话锁定模型或默认模型。\n- user_id / group_id / platform：可选，用于定位真实聊天流。",
+        core_tool=True,
         parameters=[
             ToolParameterInfo(
                 name="prompt",
@@ -426,6 +427,7 @@ class DrawpicPlugin(MaiBotPlugin):
         brief_description="编辑聊天中的图片",
         description="编辑当前聊天中的最近一张图片，或编辑指定消息中的图片。支持 OpenAI 兼容模型和 Agnes 图片模型的图生图工作流。用户发送或引用图片后说修改要求时使用。",
         detailed_description="参数说明：\n- prompt：string，必填。图片编辑提示词，描述希望修改成什么样。\n- stream_id：string，必填。当前聊天流 ID。\n- source_message_id：string，可选。指定要编辑的源图片消息 ID；不填时自动取最近一张图片。\n- source_image_base64：string，可选。直接传入源图片 Base64；有值时优先使用。\n- model：string，可选。指定图片模型名。\n- user_id / group_id / platform：可选，用于定位真实聊天流。",
+        core_tool=True,
         parameters=[
             ToolParameterInfo(
                 name="prompt",
@@ -566,6 +568,7 @@ class DrawpicPlugin(MaiBotPlugin):
         brief_description="查询绘图或视频任务状态",
         description="查询当前会话最近一个绘图/视频后台任务的状态，或按 task_id 查询指定任务。用于了解图片或视频是否生成完成。",
         detailed_description="参数说明：\n- stream_id：string，必填。当前聊天流 ID。\n- task_id：string，可选。指定要查询的任务 ID；不填时查询当前会话最近一个任务。\n\n返回字段包括 task_id、status（pending/running/completed/failed/rejected）、model、task_type（draw/edit_image/video）、progress 等。",
+        core_tool=True,
         parameters=[
             ToolParameterInfo(
                 name="stream_id",
